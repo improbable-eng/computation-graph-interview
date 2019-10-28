@@ -1,0 +1,5 @@
+
+digraph G {
+    node_1 [label="42"]
+
+}

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/3.5.0/lodash.min.js"></script>
+  <script src="https://d3js.org/d3.v3.min.js"></script>
+
+  <style>
+    body { margin:0;position:fixed;top:0;right:0;bottom:0;left:0; }
+
+  </style>
+</head>
+<body>
+  <script>
+
+  d3.json("graph.json", function (error, graph) {
+      if (error) throw error;
+      update(graph.links, graph.nodes);
+  })
+
+  function update(links, nodes) {
+
+    // DATA FORMATTING
+
+    _.each(links, function(link) {
+
+        // find other links with same target+source or source+target
+        var same = _.where(links, {
+            'source': link.source,
+            'target': link.target
+        });
+        var sameAlt = _.where(links, {
+            'source': link.target,
+            'target': link.source
+        });
+        var sameAll = same.concat(sameAlt);
+
+        _.each(sameAll, function(s, i) {
+            s.sameIndex = (i + 1);
+            s.sameTotal = sameAll.length;
+            s.sameTotalHalf = (s.sameTotal / 2);
+            s.sameUneven = ((s.sameTotal % 2) !== 0);
+            s.sameMiddleLink = ((s.sameUneven === true) && (Math.ceil(s.sameTotalHalf) === s.sameIndex));
+            s.sameLowerHalf = (s.sameIndex <= s.sameTotalHalf);
+            s.sameArcDirection = s.sameLowerHalf ? 0 : 1;
+            s.sameIndexCorrected = s.sameLowerHalf ? s.sameIndex : (s.sameIndex - Math.ceil(s.sameTotalHalf));
+        });
+
+        _.each(nodes, function(node) {
+            if (link.source == node.id)
+                link.source = node
+                // continue
+
+            if (link.target == node.id)
+                link.target = node
+                // continue
+        });
+    });
+
+    var maxSame = _.chain(links)
+        .sortBy(function(x) {
+            return x.sameTotal;
+        })
+        .last()
+        .value().sameTotal;
+
+    _.each(links, function(link) {
+        link.maxSameHalf = Math.floor(maxSame / 2);
+    });
+
+    // FORCE
+
+    var width = 960,
+        height = 800;
+
+    var force = d3.layout.force()
+        .nodes(nodes)
+        .links(links)
+        .size([width, height])
+        .linkDistance(100)
+        .charge(function(node) {
+            return -1000 * node.id
+        })
+        .gravity(2)
+        .on('tick', tick)
+        .start();
+
+    // for a static force uncomment the following
+    //     for ( var i = (nodes.length * nodes.length * nodes.length); i > 0; --i ) {
+    //         force.tick();
+    //     }
+    //     force.stop();
+
+    // RENDER
+
+    var svg = d3.select("body").append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+    svg.append("defs").append("marker")
+        .attr("id", "arrowhead")
+        .attr("viewBox", "-0 -5 10 10")
+        .attr("refX", 18)
+        .attr("refY", 0)
+        .attr("orient", "auto")
+        .attr("markerWidth", 4)
+        .attr("markerHeight", 4)
+        .attr("xoverflow", "visible")
+        .append('path')
+        .attr('d', 'M 0,-5 L 10 ,0 L 0,5')
+        .attr('fill', '#000000')
+        .style('stroke','none');
+
+
+    var path = svg.append("g").selectAll("path")
+        .data(force.links())
+        .enter().append("path")
+        .attr("marker-end", "url(#arrowhead)")
+        .style("stroke-width", 3)
+        .style("fill", "none")
+        .style("stroke", function(d) {
+            return d3.scale.category20().range()[d.sameIndex - 1];
+        });
+
+    var circle = svg.selectAll(".node")
+        .data(force.nodes())
+        .enter()
+        .append("g")
+        .attr("class", "node")
+        .attr('fill', 'white')
+        .style("stroke", function(d) {
+            color = d['color'];
+            if (!color) color = 'black';
+            return color;
+        })
+        .style("stroke-width", 3)
+        .call(force.drag);
+
+    circle.append("circle")
+        .attr("r", 10);
+
+
+    circle.append("title")
+        .text(function (d) {return d.id;});
+
+    circle.append("text")
+        .attr("dx", -5)
+        .attr("dy", 5)
+        .text(function (d) {return d.name;})
+        .style("stroke-width", 1)
+        .style("stroke", "black")
+        .attr('fill', 'black');
+
+
+    // TICK
+
+    function tick(d) {
+        circle.attr("transform", function(d) {
+            return "translate(" + d.x + "," + d.y + ")";
+        });
+        path.attr("d", linkArc);
+    }
+
+    // ARC CALCULATION
+
+    // some more info: http://stackoverflow.com/questions/11368339/drawing-multiple-edges-between-two-nodes-with-d3
+    function linkArc(d) {
+        var dx = (d.target.x - d.source.x),
+            dy = (d.target.y - d.source.y),
+            dr = Math.sqrt(dx * dx + dy * dy),
+            unevenCorrection = (d.sameUneven ? 0 : 0.5),
+            arc = ((dr * d.maxSameHalf) / (d.sameIndexCorrected - unevenCorrection));
+
+        if (d.sameMiddleLink) {
+            arc = 0;
+        }
+
+        return "M" + d.source.x + "," + d.source.y + "A" + arc + "," + arc + " 0 0," + d.sameArcDirection + " " + d.target.x + "," + d.target.y;
+    }
+
+  }
+  </script>
+</body>
