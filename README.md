@@ -22,3 +22,8 @@ You can visualise the examples by running e.g.:
 
     python plot-csv.py coloured-graph
 
+### Example
+
+Here is an example of the graph `2x + 3y`:
+
+![graph](sum_of_products.dot.png)
