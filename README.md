@@ -2,11 +2,13 @@
 
 ## About
 
-See the writeup at https://brevi.link/interview-writeup-computation-graph
-
 ## Examples
 
-There are some examples in the `csv` and `dot` directories. 
+Here is an example of the graph `2x + 3y`:
+
+![graph](sum_of_products.dot.png)
+
+There are some more examples in the `csv` and `dot` directories. 
 
 ### Setup
 
@@ -22,8 +24,3 @@ You can visualise the examples by running e.g.:
 
     python plot-csv.py coloured-graph
 
-### Example
-
-Here is an example of the graph `2x + 3y`:
-
-![graph](sum_of_products.dot.png)
