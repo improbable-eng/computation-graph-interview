@@ -1,5 +1,5 @@
 
-graph G {
+digraph G {
     node_1 [label="2"]
     node_2 [label="x"]
     node_5 [label="*"]

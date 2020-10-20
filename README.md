@@ -4,11 +4,16 @@
 
 ## Examples
 
-Here is an example of the graph `2x + 3y`:
+Here is an example of the graph `2x - 3y`:
 
-![graph](sum_of_products.dot.png)
+![graph](diff_of_products.dot.png)
 
-There are some more examples in the `csv` and `dot` directories. 
+You can see how this would be written in different formats:
+* [dot](dot/diff_of_products.dot)
+* [json](d3/diff_of_products.json)
+* csv [nodes](csv/diff-of-products.nodes.csv) and [edges](csv/diff-of-products.edges.csv)
+
+There are some more examples in the `d3`, `dot`, and `csv` directories.
 
 ### Setup
 
